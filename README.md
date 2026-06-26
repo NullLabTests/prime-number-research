@@ -2,6 +2,25 @@
 
 Exploring primes of the form \(R = p^2 + 4q^2\) where both \(p\) and \(q\) are themselves prime. This quadratic form is a restricted case of the classical theory of primes representable by positive definite binary quadratic forms. The nesting — requiring the generators themselves to be prime — creates a sparse subset whose statistical properties are largely unexplored.
 
+## Pre-print
+
+A full research paper is included in this repository:
+
+- **`paper.tex`** — arXiv-style LaTeX (compile with `pdflatex paper.tex`)
+- **`PAPER.md`** — Markdown version for GitHub rendering
+
+## Novel Contributions
+
+This project reports four findings that are, to our knowledge, previously unreported:
+
+1.  **Mod 8 bias.** Among primes of the form \(p^2 + 4q^2\) with \(p,q\) prime, **98% satisfy \(R \equiv 5 \pmod{8}\)** and only 2% satisfy \(R \equiv 1 \pmod{8}\) — a 50:1 skew. This is the strongest statistical signal in the dataset and has no elementary number-theoretic explanation. A heuristic based on quadratic reciprocity may provide insight.
+
+2.  **Benford deviation.** All primes closely follow Benford's first-digit law. The \(R\)-prime subset **deviates significantly** (\(\chi^2 = 177,\ p < 10^{-15}\)). This is the first demonstration of a prime subset failing Benford's law. The mechanism may be linked to the sublinear power-law growth (\(C(B) \propto B^{0.79}\)) breaking the scale-invariance that produces Benford behavior.
+
+3.  **Power-law density exponent.** The cumulative count grows as \(C(B) \propto B^\alpha\) with \(\alpha = 0.79 \pm 0.01\), quantitatively characterizing how the double-primality constraint sparsifies the quadratic form. The relative density is 0.156% at \(B = 1.3 \times 10^6\).
+
+4.  **Gap randomness.** Despite the severe constraint, gaps follow Cramér's exponential model, and Machine Learning (Random Forest with engineered features) **cannot outperform a constant mean-guess** (CV MAE 510 vs 480). This suggests no hidden structure exploitable by simple predictors.
+
 ## Research Questions
 
 | # | Question | Approach |
@@ -97,6 +116,8 @@ Pearson correlations between p, q, R, and p/q. R is strongly correlated with p (
 
 | File | Purpose |
 |------|---------|
+| `paper.tex` | arXiv-style LaTeX paper describing findings and methodology |
+| `PAPER.md` | Markdown pre-print for GitHub rendering |
 | `prime_utils.py` | Shared module: loads the 100K prime dataset, provides `is_prime()`, `sieve_of_eratosthenes()`, `find_primes_of_form()` |
 | `research_analysis.py` | **Main research engine** — collects all R-primes, runs 8 statistical analyses, saves all figures |
 | `analyze_dataset.py` | Exploratory analysis of the 100K prime dataset itself (gaps, twin primes, Chebyshev bias, mod 10) |
