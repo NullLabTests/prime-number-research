@@ -1,56 +1,47 @@
 # Prime Number Research
 
-This repository explores the fascinating world of prime numbers, particularly those of the form \( p^2 + 4q^2 \). It's inspired by:
-
-- The record-breaking Mersenne prime discovered by Luke Durant.
-- Theoretical advancements in prime distribution by Green & Sawhney.
+Exploring prime numbers, especially those of the form \( p^2 + 4q^2 \) where both \( p \) and \( q \) are primes.
 
 ## Contents
 
+### Shared Utilities
+- **prime_utils.py** — Common prime operations: optimized `is_prime()`, Sieve of Eratosthenes, `find_primes_of_form()`, and a loader for the bundled 100,000 prime dataset (`log_100000.txt`). Used by all scripts below.
+
 ### Scripts
+- **primes.py** — Finds primes of the form \( p^2 + 4q^2 \) using the 100K dataset, then sends results to xAI's Grok API for pattern analysis.
 
-- **primes.py**: Generates primes of the form \( p^2 + 4q^2 \) and uses the xAI API (Grok-2) to analyze patterns in their distribution.
+- **sieve.py** — Searches for special primes up to a user-specified limit, with multi-panel visualizations (distribution, gaps, p/q ratios).
 
-- **sieve.py**: Implements the Sieve of Eratosthenes to generate primes up to a limit and finds special primes where both \( p \) and \( q \) are primes. Visualizes the distribution of these primes.
+- **visualize_ml_primes.py** — Iterative search with expanding ranges. Trains a Random Forest classifier with engineered features (p mod q, p/q ratios, parity, etc.) to distinguish prime vs non-prime \( p^2 + 4q^2 \) values. Includes cross-validation, feature importance, and confusion matrix.
 
-- **visualize_ml_primes.py**: Extends the functionality of `primes.py` by allowing iterative rounds of prime generation and analysis. Includes visualization of the primes found and a basic machine learning model (Random Forest Classifier) to predict prime numbers based on \( p \) and \( q \).
+- **analyze_dataset.py** — Exploratory analysis of the bundled 100,000 prime dataset: gap distribution, twin primes, Chebyshev bias, last-digit frequency, and density plots.
 
-## Usage
-
-- **primes.py**: ```python3 primes.py``` - This script runs a single analysis for a fixed range of \( p \) and \( q \).
-
-- **sieve.py**: ```python3 sieve.py``` - Generates and visualizes special primes up to a set limit (currently 10,000).
-
-- **visualize_ml_primes.py**: ```python3 visualize_ml_primes.py``` - Enter the number of rounds when prompted to extend the search for higher primes.
+### Data
+- **log_100000.txt** — First 100,000 prime numbers (PHP serialized array, up to 1,299,709).
+- **100000_primes.zip** — Same data compressed.
 
 ## Requirements
 
 - Python 3.x
-- Libraries: `openai`, `matplotlib`, `scikit-learn`
-- xAI API Key (set as environment variable `XAI_API_KEY`)
+- `pip install matplotlib scikit-learn openai numpy`
+- xAI API key (set `XAI_API_KEY`) — required only for `primes.py` Grok analysis
 
-## Setup
+## Usage
 
-1. Clone the repository: ```git clone [your-repo-url]``` then ```cd prime-number-research```
+```bash
+# Explore the 100K prime dataset
+python3 analyze_dataset.py
 
-2. Install dependencies: ```pip install openai matplotlib scikit-learn```
+# Find special primes p^2 + 4q^2 with visualizations
+python3 sieve.py
 
-3. Set your xAI API key as an environment variable.
+# ML-based analysis with iterative range expansion
+python3 visualize_ml_primes.py
 
-## Demo
-
-Here is a demonstration image from running the script for 20 rounds:
-
-<p align="center">
-  <img src="https://i.imgur.com/sDV80WO.png" alt="Distribution of Primes p^2 + 4q^2 after 20 rounds" width="600">
-</p>
-
-The image shows the distribution of primes \( p^2 + 4q^2 \) with \( p \) on the x-axis and \( q \) on the y-axis. The color gradient represents the prime value, illustrating how the distribution evolves as we search for higher primes.
-
-## Contributing
-
-Contributions are welcome! Please fork the repository and submit pull requests for review.
+# Grok-powered pattern analysis (requires XAI_API_KEY)
+python3 primes.py
+```
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+MIT

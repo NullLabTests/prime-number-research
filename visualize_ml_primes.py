@@ -1,124 +1,171 @@
 import os
 import json
+import numpy as np
 import matplotlib.pyplot as plt
 from openai import OpenAI
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+from prime_utils import find_primes_of_form, load_prime_list, is_prime
 
-# Ensure you have your xAI API key set as an environment variable
 XAI_API_KEY = os.getenv("XAI_API_KEY")
+if XAI_API_KEY:
+    client = OpenAI(api_key=XAI_API_KEY, base_url="https://api.x.ai/v1")
+else:
+    client = None
 
-if not XAI_API_KEY:
-    raise ValueError("xAI API key not found. Please set the XAI_API_KEY environment variable.")
-
-client = OpenAI(
-    api_key=XAI_API_KEY,
-    base_url="https://api.x.ai/v1",
-)
-
-def is_prime(n):
-    if n <= 1:
-        return False
-    for i in range(2, int(n**0.5) + 1):
-        if n % i == 0:
-            return False
-    return True
-
-def primes_of_form(p, q):
-    number = p**2 + 4*q**2
-    return is_prime(number)
-
-def analyze_prime_distribution(p_start, p_end, q_start, q_end):
-    primes_found = []
-    for p in range(p_start, p_end + 1):
-        for q in range(q_start, q_end + 1):
-            if primes_of_form(p, q):
-                primes_found.append((p, q, p**2 + 4*q**2))
-    
+def analyze_with_grok(primes_found, p_range, q_range):
+    if not client:
+        return "No API key set"
+    summaries = [{"p": p, "q": q, "v": v} for p, q, v in primes_found[:50]]
     messages = [
         {
             "role": "system",
-            "content": "You are Grok, a highly analytical AI designed to explore mathematical patterns."
+            "content": "You are Grok, analyzing prime patterns in p^2 + 4q^2."
         },
         {
             "role": "user",
-            "content": f"Analyze these primes of the form p^2 + 4q^2 where ({p_start}<=p<={p_end} and {q_start}<=q<={q_end}): {json.dumps(primes_found)}. Look for any patterns in distribution, frequency, or any interesting observations."
+            "content": (
+                f"Primes found in p∈[{p_range[0]},{p_range[-1]}], q∈[{q_range[0]},{q_range[-1]}]: "
+                f"{len(primes_found)} total. Samples: {json.dumps(summaries)}. "
+                "Analyze patterns."
+            )
         }
     ]
-    
     completion = client.chat.completions.create(
-        model="grok-2-latest",
-        messages=messages,
-        temperature=0.1,
+        model="grok-2-latest", messages=messages, temperature=0.1
     )
-    
-    return completion.choices[0].message.content, primes_found
+    return completion.choices[0].message.content
 
-def visualize_primes(primes):
-    p_values = [p for p, q, _ in primes]
-    q_values = [q for p, q, _ in primes]
-    prime_values = [prime for _, _, prime in primes]
-    
-    plt.figure(figsize=(12, 8))
-    plt.scatter(p_values, q_values, s=prime_values, c=prime_values, cmap='viridis', alpha=0.6)
-    plt.colorbar(label='Prime Value')
-    plt.xlabel('p')
-    plt.ylabel('q')
-    plt.title('Distribution of Primes p^2 + 4q^2')
-    plt.show()
+def engineer_features(p, q):
+    return {
+        "p": p, "q": q,
+        "p_plus_q": p + q,
+        "p_times_q": p * q,
+        "p_mod_q": p % q if q else 0,
+        "q_mod_p": q % p if p else 0,
+        "p_minus_q": abs(p - q),
+        "p_div_q": p / q if q else 0,
+        "q_div_p": q / p if p else 0,
+        "p_parity": p % 2,
+        "q_parity": q % 2,
+        "p_log": np.log(p) if p > 0 else 0,
+        "q_log": np.log(q) if q > 0 else 0,
+    }
 
-def machine_learning_predictor(primes):
-    # Convert to binary classification problem: Is (p, q) a prime?
-    X = [(p, q) for p, q, _ in primes]
-    y = [1] * len(X)  # All are primes here
-    
-    # Add non-prime samples for balance
+def feature_vector(features):
+    return [
+        features["p"], features["q"],
+        features["p_plus_q"], features["p_times_q"],
+        features["p_mod_q"], features["q_mod_p"],
+        features["p_minus_q"],
+        features["p_div_q"], features["q_div_p"],
+        features["p_parity"], features["q_parity"],
+        features["p_log"], features["q_log"],
+    ]
+
+FEATURE_NAMES = [
+    "p", "q", "p+q", "p*q", "p%q", "q%p",
+    "|p-q|", "p/q", "q/p", "p%2", "q%2", "log(p)", "log(q)"
+]
+
+def build_dataset(prime_pairs, scale=3):
+    X, y = [], []
+    for p, q, _ in prime_pairs:
+        X.append(feature_vector(engineer_features(p, q)))
+        y.append(1)
+
+    all_p = [p for p, q, _ in prime_pairs]
+    all_q = [q for p, q, _ in prime_pairs]
+    p_min, p_max = min(all_p), max(all_p)
+    q_min, q_max = min(all_q), max(all_q)
+
     non_primes = []
-    for p in range(min(p for p, _, _ in primes), max(p for p, _, _ in primes) + 1):
-        for q in range(min(q for _, q, _ in primes), max(q for _, q, _ in primes) + 1):
-            if not primes_of_form(p, q):
-                non_primes.append((p, q))
-    non_primes = non_primes[:len(primes)]  # Balance the dataset
-    X.extend(non_primes)
-    y.extend([0] * len(non_primes))
-    
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    # Train Random Forest classifier
-    clf = RandomForestClassifier(random_state=42)
-    clf.fit(X_train, y_train)
-    
-    # Predict on test data
-    y_pred = clf.predict(X_test)
-    
-    print("Machine Learning Accuracy:", accuracy_score(y_test, y_pred))
-    
+    candidates = []
+    for p in range(p_min, p_max + 1):
+        for q in range(q_min, q_max + 1):
+            candidates.append((p, q))
+
+    np.random.shuffle(candidates)
+    for p, q in candidates:
+        if len(non_primes) >= len(prime_pairs) * scale:
+            break
+        if not is_prime(p * p + 4 * q * q):
+            non_primes.append((p, q))
+
+    for p, q in non_primes:
+        X.append(feature_vector(engineer_features(p, q)))
+        y.append(0)
+
+    return np.array(X), np.array(y)
+
+def train_and_evaluate(X, y):
+    clf = RandomForestClassifier(n_estimators=200, max_depth=15, random_state=42, n_jobs=-1)
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    scores = cross_val_score(clf, X, y, cv=cv, scoring="accuracy")
+    print(f"Cross-validation accuracy: {scores.mean():.4f} ± {scores.std():.4f}")
+
+    clf.fit(X, y)
     return clf
 
+def plot_feature_importance(clf):
+    importances = clf.feature_importances_
+    idx = np.argsort(importances)[::-1]
+    plt.figure(figsize=(10, 6))
+    plt.bar(range(len(importances)), importances[idx])
+    plt.xticks(range(len(importances)), [FEATURE_NAMES[i] for i in idx], rotation=45, ha="right")
+    plt.title("Random Forest Feature Importance")
+    plt.tight_layout()
+    plt.show()
+
+def plot_primes_scatter(primes_list):
+    p_vals = [p for p, q, _ in primes_list]
+    q_vals = [q for _, q, _ in primes_list]
+    vals = [v for _, _, v in primes_list]
+    plt.figure(figsize=(10, 8))
+    sc = plt.scatter(p_vals, q_vals, c=vals, cmap="viridis", alpha=0.6, s=20)
+    plt.colorbar(sc, label="Prime Value")
+    plt.xlabel("p"); plt.ylabel("q")
+    plt.title("Distribution of Primes p² + 4q²")
+    plt.show()
+
 if __name__ == "__main__":
-    rounds = int(input("Enter number of rounds to iterate (each round increases p and q range by 10): "))
-    
-    p_start, p_end = 2, 10
-    q_start, q_end = 1, 10
+    prime_list = load_prime_list()
+    print(f"Loaded {len(prime_list)} primes from dataset")
+
+    rounds = int(input("Enter number of rounds (each expands range by 50): ") or "5")
+    p_vals = [p for p in prime_list if p <= 50]
+    q_vals = [q for q in prime_list if q <= 50]
     all_primes = []
 
-    for _ in range(rounds):
-        analysis, primes = analyze_prime_distribution(p_start, p_end, q_start, q_end)
-        print(f"Analysis for round {_ + 1}:")
-        print(analysis)
-        all_primes.extend(primes)
-        p_start += 10
-        p_end += 10
-        q_start += 10
-        q_end += 10
+    for r in range(rounds):
+        found = find_primes_of_form(p_vals, q_vals)
+        all_primes.extend(found)
+        print(f"Round {r + 1}: p,q ≤ {p_vals[-1]}, found {len(found)} primes")
+        if client:
+            analysis = analyze_with_grok(found, p_vals, q_vals)
+            print(f"  Grok: {analysis[:100]}...")
+        p_vals = [p for p in prime_list if p <= 50 * (r + 2)]
+        q_vals = [q for q in prime_list if q <= 50 * (r + 2)]
 
-    visualize_primes(all_primes)
+    all_primes = list(set(all_primes))
+    print(f"\nTotal unique primes found: {len(all_primes)}")
 
-    # Machine Learning
-    clf = machine_learning_predictor(all_primes)
-    
-    # Example prediction
-    example_p, example_q = 20, 15
-    prediction = clf.predict([(example_p, example_q)])[0]
-    print(f"Prediction for p={example_p}, q={example_q}: {'Prime' if prediction else 'Not Prime'}")
+    plot_primes_scatter(all_primes)
+
+    print("\nBuilding ML dataset...")
+    X, y = build_dataset(all_primes)
+    print(f"Dataset: {X.shape[0]} samples, {X.shape[1]} features")
+    print(f"Class balance: {y.sum()}/{len(y)} positive ({y.mean() * 100:.1f}%)")
+
+    clf = train_and_evaluate(X, y)
+    plot_feature_importance(clf)
+
+    y_pred = clf.predict(X)
+    print("\nClassification Report:")
+    print(classification_report(y, y_pred, target_names=["Non-Prime", "Prime"]))
+
+    cm = confusion_matrix(y, y_pred)
+    ConfusionMatrixDisplay(cm, display_labels=["Non-Prime", "Prime"]).plot()
+    plt.title("Confusion Matrix")
+    plt.show()

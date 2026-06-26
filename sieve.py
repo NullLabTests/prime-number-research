@@ -1,60 +1,68 @@
-import math
 import matplotlib.pyplot as plt
+from prime_utils import load_prime_list, load_prime_set, is_prime
 
-def sieve_of_eratosthenes(limit):
-    primes = [True] * (limit + 1)
-    primes[0] = primes[1] = False
-    for i in range(2, int(limit**0.5) + 1):
-        if primes[i]:
-            for j in range(i * i, limit + 1, i):
-                primes[j] = False
-    return [i for i in range(2, limit + 1) if primes[i]]
+def find_special_primes(prime_list):
+    prime_set = load_prime_set()
+    special = []
+    for i, p in enumerate(prime_list):
+        p2 = p * p
+        for q in prime_list[:i + 1]:
+            n = p2 + 4 * q * q
+            if n in prime_set:
+                special.append((p, q, n))
+        if i % 100 == 0 and i > 0:
+            print(f"Progress: checked {i}/{len(prime_list)} primes, found {len(special)} special primes")
+    return special
 
-def is_special_prime(p, q, primes):
-    number = p**2 + 4*q**2
-    return number in primes
+if __name__ == "__main__":
+    limit = int(input("Enter prime limit (e.g. 10000): ") or "10000")
+    print(f"Loading primes up to {limit}...")
+    all_primes = load_prime_list()
+    primes = [p for p in all_primes if p <= limit]
+    print(f"Using {len(primes)} primes up to {primes[-1] if primes else 0}")
 
-def collect_special_primes(limit):
-    primes = sieve_of_eratosthenes(limit)
-    special_primes = []
-    for p in primes:
-        for q in primes:
-            if p <= q:  # To avoid duplicates like (3,2) and (2,3)
-                if is_special_prime(p, q, primes):
-                    special_primes.append((p, q, p**2 + 4*q**2))
-    return special_primes
+    print("Searching for special primes of form p^2 + 4q^2...")
+    special_primes = find_special_primes(primes)
+    print(f"Found {len(special_primes)} special primes")
 
-# Set the limit for prime generation
-limit = 10000
+    if not special_primes:
+        print("No special primes found.")
+        exit()
 
-# Generate special primes
-special_primes = collect_special_primes(limit)
+    p_vals = [p for p, q, _ in special_primes]
+    q_vals = [q for _, q, _ in special_primes]
+    prime_vals = [v for _, _, v in special_primes]
 
-# Separate data for visualization
-p_values = [p for p, q, _ in special_primes]
-q_values = [q for _, q, _ in special_primes]
-special_prime_values = [prime for _, _, prime in special_primes]
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
-# Visualization
-plt.figure(figsize=(15, 5))
+    ax = axes[0, 0]
+    scatter = ax.scatter(p_vals, q_vals, c=prime_vals, cmap="viridis", alpha=0.6, s=15)
+    ax.set_xlabel("p"); ax.set_ylabel("q")
+    ax.set_title("(p, q) Distribution of Special Primes")
+    plt.colorbar(scatter, ax=ax, label="Prime Value")
 
-# Plot distribution of p and q
-plt.subplot(1, 2, 1)
-plt.scatter(p_values, q_values, alpha=0.5)
-plt.xlabel('p')
-plt.ylabel('q')
-plt.title('Distribution of p and q for p^2 + 4q^2 primes')
-plt.grid(True)
+    ax = axes[0, 1]
+    ax.plot(range(len(prime_vals)), prime_vals, "o", markersize=2, color="tab:blue")
+    ax.set_xlabel("Index"); ax.set_ylabel("Special Prime Value")
+    ax.set_title("Special Primes by Discovery Order")
+    ax.set_yscale("log")
 
-# Plot distribution of special primes against their index
-plt.subplot(1, 2, 2)
-plt.plot(range(len(special_prime_values)), special_prime_values, 'o', markersize=1)
-plt.xlabel('Index of Special Prime')
-plt.ylabel('Special Prime Number')
-plt.title('Distribution of Special Primes')
-plt.grid(True)
+    ax = axes[1, 0]
+    gaps = [prime_vals[i + 1] - prime_vals[i] for i in range(len(prime_vals) - 1)]
+    ax.hist(gaps, bins=50, color="tab:orange", edgecolor="white")
+    ax.set_xlabel("Gap"); ax.set_ylabel("Frequency")
+    ax.set_title("Gap Distribution Between Consecutive Special Primes")
 
-plt.tight_layout()
-plt.show()
+    ax = axes[1, 1]
+    ratios = [p / q for p, q in special_primes if q != 0]
+    ax.hist(ratios, bins=40, color="tab:green", edgecolor="white")
+    ax.set_xlabel("p/q Ratio"); ax.set_ylabel("Frequency")
+    ax.set_title("Distribution of p/q Ratios")
 
-print(f"Number of special primes found: {len(special_primes)}")
+    plt.tight_layout()
+    plt.show()
+
+    top10 = sorted(special_primes, key=lambda x: x[2], reverse=True)[:10]
+    print("\nTop 10 largest special primes found:")
+    for p, q, v in top10:
+        print(f"  p={p}, q={q}, p^2+4q^2={v}")
