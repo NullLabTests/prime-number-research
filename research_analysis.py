@@ -264,11 +264,19 @@ def build_ulam_spiral(n_side, prime_set, r_set):
     N = n_side * n_side
     x = y = 0; dx, dy = 1, 0
     coords = {}
+    step = 1
+    steps_in_leg = 0
+    leg = 0
     for i in range(1, N + 1):
         coords[i] = (x, y)
-        if abs(x) == abs(y) and (x > 0 or y == 0) or (x < 0 and y == -x):
-            dx, dy = -dy, dx
         x += dx; y += dy
+        steps_in_leg += 1
+        if steps_in_leg == step:
+            steps_in_leg = 0
+            leg += 1
+            dx, dy = -dy, dx
+            if leg % 2 == 0:
+                step += 1
     xs = [c[0] for c in coords.values()]
     ys = [c[1] for c in coords.values()]
     x_off, y_off = -min(xs), -min(ys)
@@ -280,7 +288,7 @@ def build_ulam_spiral(n_side, prime_set, r_set):
         grid_r[cy + y_off, cx + x_off] = i in r_set
     return grid_all, grid_r
 
-side = 201
+side = 301
 r_set = set(r_vals)
 prime_set_m = set(all_primes_1M[:100000])
 grid_all, grid_r = build_ulam_spiral(side, prime_set_m, r_set)
