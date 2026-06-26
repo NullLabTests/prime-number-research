@@ -38,3 +38,9 @@ var/
 
 # API keys or secrets
 *.env
+
+# Local non-prime files
+*.webp
+ex.txt
+text.txt
+gen_algo.py
