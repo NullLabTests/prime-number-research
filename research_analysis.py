@@ -340,6 +340,26 @@ if N >= 50:
     y_pred = rf.predict(X)
     mean_guess_mae = np.mean(np.abs(y - y.mean()))
 
+    # Ablation: test removing feature groups
+    abl_groups = {
+        'all': range(12),
+        'no-mod': [i for i in range(12) if not (6 <= i <= 10)],
+        'no-ratio': [i for i in range(12) if i != 3],
+        'only-R': [2],
+        'only-pq': [0, 1],
+    }
+    abl_results = {}
+    for aname, idx in abl_groups.items():
+        if len(idx) < 1:
+            continue
+        X_sub = X[:, idx]
+        scores_s = cross_val_score(
+            RandomForestRegressor(n_estimators=100, max_depth=8, random_state=42, n_jobs=-1),
+            X_sub, y, cv=3, scoring='neg_mean_absolute_error'
+        )
+        abl_results[aname] = -scores_s.mean()
+    abl_results['mean-guess'] = mean_guess_mae
+
     fig, axes = plt.subplots(1, 3, figsize=(16, 5))
 
     ax = axes[0]
@@ -430,4 +450,7 @@ print(f"Benford χ²={chi2_r:.1f}, p={p_r:.2e}")
 if N >= 50:
     print(f"ML gap MAE (CV)               : {mae_scores.mean():.0f} ± {mae_scores.std():.0f}")
     print(f"Mean-guess MAE                : {mean_guess_mae:.0f}")
+    print("Ablation (CV MAE):")
+    for k, v in sorted(abl_results.items(), key=lambda x: x[1]):
+        print(f"  {k:15s}: {v:.0f}")
 print(f"\nAll figures saved to ./{OUT}/")

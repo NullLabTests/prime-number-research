@@ -44,7 +44,12 @@ However, far less is known when the generators *x* and *y* are
 themselves restricted to be prime. This nested constraint
 *R* = *p*² + 4*q*² with *p*, *q* ∈ ℙ creates a deeply
 rarified subset whose statistical properties have not, to our
-knowledge, been systematically studied.
+knowledge, been systematically studied. Recently, Green and
+Sawhney [6] proved that there are in fact infinitely many such
+primes for the case *n* = 4, resolving the "Gaussian primes
+conjecture" of Friedlander and Iwaniec. Their analytic method
+establishes an asymptotic count but does not characterize the
+fine-scale statistical structure we investigate here.
 
 ---
 
@@ -156,7 +161,7 @@ full prime sequence.
 
 <p align="center">
   <img src="figs/06_ulam_spiral.png" alt="Ulam spiral" width="95%">
-  <br><em>Ulam spiral (201×201): all primes (blue), R-primes (red),
+  <br><em>Ulam spiral (301×301): all primes (blue), R-primes (red),
   overlay (magenta = overlap).</em>
 </p>
 
@@ -180,7 +185,7 @@ quadratic form: *p*² grows as O(*p*²) while 4*q*²
 is O(*q*²).
 
 <p align="center">
-  <img src="figs/08_correlation.png" alt="Correlation" width="80%">
+  <img src="figs/10_correlation.png" alt="Correlation" width="80%">
   <br><em>Correlation matrix and pair plots.</em>
 </p>
 
@@ -201,8 +206,10 @@ the next *R*-prime from features of the current triple
 
 With 126K specimens, the model achieves **modest predictive power**,
 outperforming the mean-guess by ~12%. Feature importance shows
-log *R* and *R* dominating. This suggests subtle gap structure
-exists but requires large samples to detect.
+log *R* and *R* dominating. Ablation reveals that removing modular
+residues or p/q ratios barely changes performance (CV MAE 2,001 both
+cases), while even just (*p*, *q*) alone achieves 2,015 — most of the
+signal comes from the generators themselves, not modular fine structure.
 
 <p align="center">
   <img src="figs/09_ml_gap_prediction.png" alt="ML gap prediction" width="95%">
@@ -227,9 +234,9 @@ signal only emerges with sufficient data.
    here alongside the mod 8 bias confirmed at 62× the original
    sample size.
 3. **Benford deviation (massive at scale)** — χ² = 4,102
-   (p ≈ 0) — the first demonstration of a prime subset failing
-   Benford's law, confirmed to be a structural property rather
-   than a small-sample artifact.
+   (p ≈ 0) — to our knowledge, the first reported instance of
+   a prime subset deviating from Benford's law, confirmed to be
+   a structural property rather than a small-sample artifact.
 4. **Power-law exponent** α ≈ 0.768 — quantitative measure of
    how double-primality sparsifies the quadratic form.
 5. **Gap structure** — Cramér's model holds at first order with
@@ -271,3 +278,5 @@ publicly available.
    Amer. Math. Soc.* **11** (1964), 517.
 5. F. Benford, The law of anomalous numbers,
    *Proc. Amer. Philos. Soc.* **78** (1938), 551–572.
+6. B. Green and M. Sawhney, Primes of the form *p*² + *nq*²,
+   arXiv:2410.04189 (2024), to appear in *Acta Math.*
