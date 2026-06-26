@@ -27,6 +27,7 @@ from scipy import stats
 from sympy import isprime, primerange
 import os, warnings, itertools
 from collections import Counter, defaultdict
+from PIL import Image
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import cross_val_score
 
@@ -293,25 +294,31 @@ r_set = set(r_vals)
 prime_set_m = set(all_primes_1M[:100000])
 grid_all, grid_r = build_ulam_spiral(side, prime_set_m, r_set)
 
-fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+fig, axes = plt.subplots(1, 3, figsize=(20, 7))
+fig.patch.set_facecolor('white')
 
 for ax, g, title in [
-    (axes[0], grid_all, 'All Primes (Ulam Spiral)'),
-    (axes[1], grid_r, 'r-Primes Only (p²+4q²)'),
-    (axes[2], None, 'Overlay: blue=all  red=r-primes  magenta=both'),
+    (axes[0], grid_all, 'All Primes (Ulam Spiral 301×301)'),
+    (axes[1], grid_r, 'r-Primes Only  (p²+4q²)'),
+    (axes[2], None, 'Overlay:  blue=all  red=r-primes  magenta=both'),
 ]:
+    ax.set_facecolor('white')
     if g is not None:
-        ax.imshow(g, cmap='Blues', interpolation='none')
+        ax.imshow(g, cmap='Blues', interpolation='nearest', vmin=0, vmax=1)
     else:
-        rgb = np.zeros((*grid_all.shape, 3))
-        rgb[grid_all] = [0.6, 0.8, 1.0]
-        rgb[grid_r] = [1.0, 0.3, 0.3]
-        rgb[grid_all & grid_r] = [1.0, 0.0, 1.0]
-        ax.imshow(rgb, interpolation='none')
-    ax.set_title(title); ax.axis('off')
+        rgb = np.ones((*grid_all.shape, 3))
+        rgb[grid_all] = [0.2, 0.4, 0.8]
+        rgb[grid_r] = [0.9, 0.15, 0.15]
+        rgb[grid_all & grid_r] = [0.8, 0.0, 0.8]
+        ax.imshow(rgb, interpolation='nearest')
+    ax.set_title(title, fontsize=12, color='black'); ax.axis('off')
 
 plt.tight_layout()
-fig.savefig(f'{OUT}/08_ulam_spiral.png', bbox_inches='tight')
+fig.savefig(f'{OUT}/08_ulam_spiral.png', bbox_inches='tight', dpi=150,
+            facecolor='white', edgecolor='none')
+# strip alpha channel for GitHub compatibility
+img = Image.open(f'{OUT}/08_ulam_spiral.png').convert('RGB')
+img.save(f'{OUT}/08_ulam_spiral.png')
 plt.close()
 
 # ====================================================================
