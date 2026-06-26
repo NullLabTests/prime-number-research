@@ -39,6 +39,11 @@ var/
 # API keys or secrets
 *.env
 
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+
 # Local non-prime files
 *.webp
 ex.txt

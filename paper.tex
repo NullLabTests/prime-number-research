@@ -21,21 +21,19 @@
 \begin{abstract}
 We present a systematic empirical investigation of primes of the form
 $R = p^{2}+4q^{2}$ where both $p$ and $q$ are themselves prime.
-Using the first 100,000 primes (up to $1{,}299{,}709$), we identify
-2,027 such $R$-primes and characterize their statistical properties.
-We report four principal findings: (i)~the relative density of
-$R$-primes decays as a power law $C(B) \propto B^{0.79}$, yielding
-roughly one $R$-prime per 640 primes at the million scale;
+Exhaustively searching all primes $p,q \leq 8{,}000$ (1,007 candidates),
+we identify 126,764 such $R$-primes and characterize their statistical
+properties. We report four principal findings: (i)~the cumulative count
+grows as a power law $C(B) \propto B^{0.768}$, quantitatively
+characterizing sparseness from the double-primality constraint;
 (ii)~every $R$-prime satisfies $R \equiv 1 \pmod{4}$, and remarkably
-98\% satisfy $R \equiv 5 \pmod{8}$ --- a strong statistical bias
-with no elementary explanation; (iii)~the gap distribution closely
-follows the exponential model of Cram\'er, consistent with
-randomness; and (iv)~unlike the full prime set, $R$-primes deviate
-significantly from Benford's first-digit law
-($\chi^{2}=177$, $p<10^{-15}$). We further show that a Random Forest
-regressor with engineered features cannot outperform a constant
-mean-guess for gap prediction, consistent with the hypothesis that
-gaps behave as independent exponential random variables.
+99.9\% satisfy $R \equiv 5 \pmod{8}$ and 99.8\% satisfy
+$R \equiv 2 \pmod{3}$ --- extreme biases with no elementary explanation;
+(iii)~the gap distribution follows Cram\'er's exponential model at
+first order with heavier tails, and a Random Forest achieves modest
+predictive power at scale (CV MAE 2,053 vs mean-guess 2,325);
+and (iv)~unlike the full prime set, $R$-primes deviate massively
+from Benford's first-digit law ($\chi^{2}=4{,}102$, $p\approx0$).
 An Ulam spiral overlay reveals diagonal band structure, and
 correlation analysis confirms $R \approx p^{2}$ dominance
 ($\rho_{p,R} = 0.87$). All data and code are open-source.
@@ -66,17 +64,15 @@ All code is available at
 
 \section{Data and Methodology}
 
-We use the first 100,000 primes, up to $1{,}299{,}709$,
-sourced from a standard reference table. Primality testing
-for candidate values $R = p^{2}+4q^{2}$ uses $O(1)$ set
-membership lookup against this pre-computed list.
+We exhaustively search all primes $p,q \leq 8{,}000$
+(1,007 primes, $\sim10^6$ candidate pairs), computing
+$R = p^{2}+4q^{2}$ for each pair and testing primality
+with \texttt{sympy.isprime} (deterministic Miller-Rabin,
+appropriate for $R \leq 3.2\times10^{8}$). This yields
+126,764 valid triples $(p,q,R)$.
 
-For each pair of primes $(p,q)$ with $p \geq q$ (to avoid
-symmetry), we compute $R = p^{2}+4q^{2}$ and test membership.
-The $p \geq q$ convention avoids double-counting since the
-form is symmetric in the sense that $p^{2}+4q^{2}$ is not
-symmetric (unlike $p^{2}+q^{2}$), but the unordered pair
-$(p,q)$ yields a unique $R$.
+For baseline comparison, all primes up to $10^{6}$ are
+generated via \texttt{sympy.primerange} (segmented sieve).
 
 Statistical tests use $\chi^{2}$ goodness-of-fit with
 $\alpha = 0.05$. Machine learning uses a Random Forest
@@ -88,26 +84,23 @@ and are available in the repository.
 
 \subsection{Density and Growth}
 
-We identify \textbf{2,027} primes of the form $p^{2}+4q^{2}$
-within the first 100,000 primes. Figure~\ref{fig:density}
+We identify \textbf{126,764} primes of the form $p^{2}+4q^{2}$
+with $p,q \leq 8{,}000$. Figure~\ref{fig:density}
 shows the cumulative count as a function of the bound $B$.
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.95\textwidth]{figs/02_density.png}
-\caption{Cumulative count of $R$-primes vs.\ bound $B$.
-A power-law fit gives $C(B) \propto B^{0.79}$.
-The right panel shows relative density $C(B) / \pi(B)$,
-which decays to approximately $0.156\%$ at $B = 1.3\times10^{6}$.}
+\includegraphics[width=0.95\textwidth]{figs/03_density_cumulative.png}
+\caption{Cumulative count of $R$-primes vs.\ bound $B$ (log-log).
+A power-law fit gives $C(B) \propto B^{0.768}$.
+The right panel shows relative density $C(B) / \pi(B)$.}
 \label{fig:density}
 \end{figure}
 
-The relative density $C(B)/\pi(B)$ at our maximum bound is
-$0.156\%$, corresponding to roughly one $R$-prime per 640
-ordinary primes. A log-log regression against $B$ yields
-$C(B) \propto B^{\alpha}$ with $\alpha = 0.79 \pm 0.01$,
+A log-log regression against $B$ yields
+$C(B) \propto B^{\alpha}$ with $\alpha = 0.768$,
 significantly below linear growth ($\alpha=1$ for all primes).
-The raw density $C(B)/B$ decays as $B^{\alpha-1} \approx B^{-0.21}$,
+The raw density $C(B)/B$ decays as $B^{\alpha-1} \approx B^{-0.232}$,
 consistent with the sparseness induced by the double-primality
 constraint.
 
@@ -115,71 +108,82 @@ constraint.
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.95\textwidth]{figs/03_modulo_classes.png}
-\caption{Residue class distributions of $R$-primes modulo various $m$.
-Note the exclusive occupancy of $1 \pmod{4}$ and the strong
-skew toward $5 \pmod{8}$.}
+\includegraphics[width=0.95\textwidth]{figs/05_residue_classes.png}
+\caption{Residue class distributions of $R$-primes modulo 3, 4, 5, 7, 8, 12.
+Red bars indicate over-representation relative to uniform.}
 \label{fig:modulo}
 \end{figure}
 
-All 2,027 $R$-primes satisfy $R \equiv 1 \pmod{4}$. This is
+All 126,764 $R$-primes satisfy $R \equiv 1 \pmod{4}$. This is
 a theorem: for odd $p$, $p^{2} \equiv 1 \pmod{4}$ and
-$4q^{2} \equiv 0 \pmod{4}$; for $p=2$, $R=4+4q^{2}=4(1+q^{2})$,
-and since $q$ is odd, $1+q^{2} \equiv 2 \pmod{4}$, giving
-$R \equiv 0 \pmod{8}$. Checking the data confirms $p=2, q=2$
-is the only even case, yielding $R=2^{2}+4\cdot2^{2}=20$,
-which is not prime. Hence all $R$-primes have odd $p$, odd $q$.
+$4q^{2} \equiv 0 \pmod{4}$. Hence all $R$-primes have
+odd $p$, odd $q$.
 
-More striking is the behavior modulo~8:
-\begin{itemize}
-\item $R \equiv 1 \pmod{8}$: \textbf{39} occurrences (1.9\%)
-\item $R \equiv 5 \pmod{8}$: \textbf{1,988} occurrences (98.1\%)
-\end{itemize}
-This 50:1 skew has no elementary explanation and to our knowledge
-has not been previously reported. A $\chi^{2}$ test against
-uniformly distributed residues (allowing only 1 and 5 as possible
-residues for numbers $\equiv 1 \pmod{4}$) yields
-$\chi^{2}=1875$, $p \approx 0$.
+More striking are the extreme biases in Table~\ref{tab:mod}:
 
-Modulo 12, we observe a similar imbalance: residues
-$\{1,5,7,11\}$ are distributed as
-$[1037, 8, 974, 8]$, showing strong preference for 1 and 7.
+\begin{table}[ht]
+\centering
+\caption{Residue class biases. ``Share'' is the fraction of $R$-primes
+falling in the most frequent residue class.}
+\label{tab:mod}
+\begin{tabular}{cccc}
+\toprule
+Modulus & Most freq.\ residue & Share & Uniform \\
+\midrule
+3 & 2 & 99.8\% & 33.3\% \\
+4 & 1 & 100\% & 25.0\% \\
+5 & 3 & 49.8\% & 20.0\% \\
+7 & 6 & 22.2\% & 14.3\% \\
+8 & 5 & 99.9\% & 12.5\% \\
+12 & 5 & 99.8\% & 8.3\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The \textbf{mod 3 bias} (99.8\% $\equiv 2$) and \textbf{mod 8 bias}
+(99.9\% $\equiv 5$) are the strongest signals in the dataset and
+to our knowledge have not been previously reported. These are the
+``fingerprints'' of the quadratic form $x^{2}+4y^{2}$ amplified by
+the double-primality constraint.
 
 \subsection{Gap Distribution}
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.7\textwidth]{figs/01_overview.png}
-\caption{Overview figure showing $(p,q)$ scatter, discovery-order
-growth, gap distribution with CDF overlay, and linear fit.}
-\label{fig:overview}
+\includegraphics[width=0.95\textwidth]{figs/01_pq_scatter.png}
+\caption{Distribution of valid $(p,q)$ pairs, colored by $\log_{10} R$.}
+\label{fig:pqscatter}
 \end{figure}
 
-Figure~\ref{fig:overview} (lower panels) shows the gap
-distribution. Summary statistics:
+Figure~\ref{fig:gap} shows the gap distribution. Summary statistics:
 \begin{align*}
-\text{Mean gap} &= 641.3, \\
-\text{Median gap} &= 456, \\
-\text{Maximum gap} &= 6{,}096.
+\text{Mean gap} &= 2{,}515, \\
+\text{Median gap} &= 1{,}200, \\
+\text{Maximum gap} &= 1{,}229{,}280.
 \end{align*}
 
-The empirical CDF closely tracks the exponential distribution
-$\text{Exp}(1/\mu)$ with $\mu = 641.3$. This is consistent
-with Cram\'er's random model of prime gaps, which posits that
-primes behave as independent Bernoulli trials with success
-probability $1/\log n$. The fact that this model extends to the
-rarified $R$-prime subset suggests that the double-primality
-constraint does not introduce long-range correlations in the
-gap structure.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\textwidth]{figs/02_gap_distribution.png}
+\caption{Gap distribution with exponential fit (left) and Q-Q plot
+vs.\ exponential (right). The bulk tracks Cram\'er's model, but
+the Q-Q plot reveals heavier tails.}
+\label{fig:gap}
+\end{figure}
+
+The empirical distribution tracks the exponential model
+$\text{Exp}(1/\mu)$ with $\mu = 2{,}515$ at first order, but the
+Q-Q plot reveals heavier tails --- consistent with known
+refinements to Cram\'er's model such as the Maier matrix method.
 
 \subsection{Benford's Law}
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.85\textwidth]{figs/05_benford.png}
+\includegraphics[width=0.85\textwidth]{figs/06_benford.png}
 \caption{First-digit distribution for $R$-primes vs.\ all primes.
-The $R$-primes deviate significantly from Benford's law
-($\chi^{2}=177$, $p<10^{-15}$), while all primes follow it closely.}
+The $R$-primes deviate massively from Benford's law
+($\chi^{2}=4{,}102$, $p\approx0$), while all primes follow it closely.}
 \label{fig:benford}
 \end{figure}
 
@@ -190,23 +194,25 @@ Primes are known to approximately obey this law
 compares the first-digit distribution for $R$-primes and
 all primes.
 
-We find that $R$-primes deviate from Benford's law with
-$\chi^{2}=177.1$ (9 degrees of freedom, $p \approx 0$).
+We find that $R$-primes deviate massively from Benford's law with
+$\chi^{2}=4{,}102$ (9 degrees of freedom, $p \approx 0$).
 The deviation is driven by an excess of first digit~1 and
 a deficit of digits 6--9. In contrast, the full prime set
 shows excellent agreement ($\chi^{2}=10.2$, $p=0.25$).
 
 This suggests that the double-primality constraint breaks
 the scale-invariance that produces Benford behavior in the
-full prime sequence. The mechanism may be related to the
-power-law growth $C(B) \propto B^{0.79}$ with exponent
-significantly different from 1.
+full prime sequence. The magnitude of the deviation grows
+with sample size, confirming this is a structural property
+rather than a small-sample artifact. The mechanism may be
+related to the power-law growth $C(B) \propto B^{0.768}$
+with exponent significantly different from 1.
 
 \subsection{Ulam Spiral}
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.95\textwidth]{figs/06_ulam_spiral.png}
+\includegraphics[width=0.95\textwidth]{figs/08_ulam_spiral.png}
 \caption{Ulam spiral (201$\times$201). Left: all primes (blue).
 Center: $R$-primes only (red). Right: overlay, with magenta
 indicating overlap. The $R$-primes concentrate along diagonal
@@ -227,7 +233,7 @@ on the spiral.
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.8\textwidth]{figs/08_correlation.png}
+\includegraphics[width=0.8\textwidth]{figs/10_correlation.png}
 \caption{Pearson correlation matrix and pair plots.
 $R$ is strongly correlated with $p$ ($\rho=0.87$) but
 uncorrelated with $q$ ($\rho=-0.07$), confirming
@@ -259,57 +265,60 @@ and $\log R$.
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.95\textwidth]{figs/07_ml_gap_prediction.png}
-\caption{Random Forest gap prediction. The model (CV MAE~$510$
-with std~$88$) slightly underperforms a constant mean-guess
-(MAE~$480$), consistent with gap randomness. Feature importance
-shows $\log R$ dominating.}
+\includegraphics[width=0.95\textwidth]{figs/09_ml_gap_prediction.png}
+\caption{Random Forest gap prediction. With 126K specimens the model
+achieves CV MAE~$2{,}053$ vs mean-guess~$2{,}325$, showing modest
+predictive power. Feature importance shows $\log R$ and $R$
+dominating.}
 \label{fig:ml}
 \end{figure}
 
-The model achieved a 5-fold cross-validated MAE of $510 \pm 88$,
-which is \textit{worse} than a trivial mean-guess predictor
-(MAE~$480$). Feature importance analysis reveals $\log R$
-as the dominant predictor, with all other features contributing
-marginally.
+The model achieved a 5-fold cross-validated MAE of $2{,}053 \pm 1{,}468$,
+modestly outperforming a mean-guess predictor (MAE~$2{,}325$).
+Feature importance analysis reveals $\log R$ and $R$ as the dominant
+predictors. At the smaller scale of our earlier dataset-limited search
+(2,027 specimens), the model could not beat the mean --- the predictive
+signal only emerges with sufficient data.
 
-This negative result supports the hypothesis that $R$-prime
-gaps are consistent with independent exponential random
-variables --- no simple set of features can predict when the
-next $R$-prime will appear.
+This partial success suggests subtle gap structure exists but requires
+large samples to detect. Gaps remain largely unpredictable, consistent
+with near-exponential behavior.
 
 \section{Discussion}
 
-We have presented the first systematic empirical analysis of
-primes of the form $p^{2}+4q^{2}$ with $p,q$ prime. Four
-findings stand out as potentially novel:
+We have presented the first large-scale systematic analysis of
+primes of the form $p^{2}+4q^{2}$ with $p,q$ prime, identifying
+126,764 specimens. Five findings stand out as potentially novel:
 
 \begin{enumerate}
-\item \textbf{Mod~8 bias.} The overwhelming preference for
-$R \equiv 5 \pmod{8}$ over $R \equiv 1 \pmod{8}$ is
-unexplained and invites a number-theoretic investigation.
-A heuristic based on quadratic reciprocity may provide insight.
+\item \textbf{Mod~3 and mod~8 biases.} The overwhelming preferences
+for $R \equiv 2 \pmod{3}$ (99.8\%) and $R \equiv 5 \pmod{8}$
+(99.9\%) are the strongest statistical signals in the dataset.
+These are fingerprints of the quadratic form $x^{2}+4y^{2}$
+amplified by the double-primality constraint.
 
-\item \textbf{Benford deviation.} The strong departure from
-Benford's law distinguishes $R$-primes from the full prime
-set. This may reflect the power-law exponent $\alpha \neq 1$
-in the cumulative count.
+\item \textbf{Benford deviation (massive at scale).}
+The $\chi^{2}=4{,}102$ deviation from Benford's law is a
+structural property of the subset, not a small-sample artifact.
 
-\item \textbf{Power-law density.} The exponent $\alpha \approx 0.79$
-is a quantitative characterization of the sparseness induced
-by the double-primality constraint.
+\item \textbf{Power-law density.} The exponent $\alpha \approx 0.768$
+quantitatively characterizes the sparseness induced by the
+double-primality constraint.
 
-\item \textbf{Gap randomness.} The agreement with Cram\'er's
-model, and the failure of ML to predict gaps, together suggest
-that the constraint does not introduce additional gap structure.
+\item \textbf{Gap structure.} Cram\'er's model holds at first order,
+but Q-Q analysis reveals heavier tails. ML achieves modest
+predictive power at scale (12\% improvement over mean-guess).
+
+\item \textbf{Independence of $p$ and $q$.} The near-zero
+correlation ($\rho = 0.026$) confirms the generators are
+essentially independent.
 \end{enumerate}
 
 \subsection{Limitations}
 
-Our census is limited to the first 100,000 primes
-($p_n \leq 1.3\times10^{6}$). Extending to $10^{7}$ or
-$10^{8}$ primes would test whether the power-law exponent
-and mod~8 bias persist at larger scales. The ML analysis
+Our census is limited to $p,q \leq 8{,}000$ ($R \leq 3.2\times10^{8}$).
+Extending to 50,000 would reach $R \sim 10^{10}$ and test whether the
+power-law exponent and modular biases persist. The ML analysis
 uses simple features; graph neural networks or transformer
 architectures might capture longer-range dependencies.
 
@@ -317,12 +326,12 @@ architectures might capture longer-range dependencies.
 
 Primes of the form $p^{2}+4q^{2}$ with $p,q$ prime form a
 sparse subset with striking statistical properties. The
-strong mod~8 bias, anomalous Benford behavior, and
-power-law density decay all warrant further investigation.
-The failure of machine learning to predict gaps reinforces
-the view that prime gaps, even in restricted subsets, behave
-as independent random variables. All data and code are
-publicly available to facilitate reproduction and extension.
+strong mod~3 and mod~8 biases, anomalous Benford behavior,
+and power-law density decay all warrant further investigation.
+Machine learning achieves modest gap predictability at scale,
+but gaps remain largely unpredictable --- consistent with
+near-exponential behavior. All data and code are publicly
+available to facilitate reproduction and extension.
 
 \begin{thebibliography}{9}
 \bibitem{cox2013primes}

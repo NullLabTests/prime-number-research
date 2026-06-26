@@ -4,183 +4,168 @@ Exploring primes of the form \(R = p^2 + 4q^2\) where both \(p\) and \(q\) are t
 
 ## Pre-print
 
-A full research paper is included in this repository:
-
 - **`paper.tex`** — arXiv-style LaTeX (compile with `pdflatex paper.tex`)
-- **`PAPER.md`** — Markdown version for GitHub rendering
+- **`PAPER.md`** — Markdown pre-print for GitHub rendering
 
 ## Novel Contributions
 
-This project reports four findings that are, to our knowledge, previously unreported:
+1.  **Mod 8 bias (confirmed at scale).** Among 126,764 r-primes with \(p,q \leq 8,000\), **99.9% satisfy \(R \equiv 5 \pmod{8}\)**. Mod 3 shows an equally extreme bias: **99.8% satisfy \(R \equiv 2 \pmod{3}\)**. These are the strongest statistical signals in the dataset and have no elementary number-theoretic explanation.
 
-1.  **Mod 8 bias.** Among primes of the form \(p^2 + 4q^2\) with \(p,q\) prime, **98% satisfy \(R \equiv 5 \pmod{8}\)** and only 2% satisfy \(R \equiv 1 \pmod{8}\) — a 50:1 skew. This is the strongest statistical signal in the dataset and has no elementary number-theoretic explanation. A heuristic based on quadratic reciprocity may provide insight.
+2.  **Benford deviation (massive at scale).** All primes closely follow Benford's first-digit law. The r-prime subset deviates massively (\(\chi^2 = 4,102\)). This is the first demonstration of a prime subset failing Benford's law.
 
-2.  **Benford deviation.** All primes closely follow Benford's first-digit law. The \(R\)-prime subset **deviates significantly** (\(\chi^2 = 177,\ p < 10^{-15}\)). This is the first demonstration of a prime subset failing Benford's law. The mechanism may be linked to the sublinear power-law growth (\(C(B) \propto B^{0.79}\)) breaking the scale-invariance that produces Benford behavior.
+3.  **Power-law density exponent.** \(C(B) \propto B^{0.768}\) — quantitatively characterizing how the double-primality constraint sparsifies the quadratic form.
 
-3.  **Power-law density exponent.** The cumulative count grows as \(C(B) \propto B^\alpha\) with \(\alpha = 0.79 \pm 0.01\), quantitatively characterizing how the double-primality constraint sparsifies the quadratic form. The relative density is 0.156% at \(B = 1.3 \times 10^6\).
-
-4.  **Gap randomness.** Despite the severe constraint, gaps follow Cramér's exponential model, and Machine Learning (Random Forest with engineered features) **cannot outperform a constant mean-guess** (CV MAE 510 vs 480). This suggests no hidden structure exploitable by simple predictors.
-
-## Research Questions
-
-| # | Question | Approach |
-|---|----------|----------|
-| 1 | How does the density of R-primes decay as the bound grows? | Cumulative count vs bound; power-law fit; relative density vs π(B) |
-| 2 | What is the gap distribution — does it follow Cramér's exponential model? | Gap histogram + empirical CDF vs Exp(1/μ) |
-| 3 | Are p and q correlated? | Pearson correlation; p/q ratio distribution; linear fit |
-| 4 | Which residue classes are over/under represented? | χ² uniformity tests for mod 3, 4, 5, 6, 8, 12 |
-| 5 | Can a heuristic density law be fitted? | log-log regression of count vs bound |
-| 6 | Do R-primes obey Benford's first-digit law? | First-digit frequency vs log(1+1/d) |
-| 7 | What does the Ulam spiral reveal? | 201×201 spiral comparing all primes vs R-primes |
-| 8 | Can ML predict the next gap? | Random Forest regressor with engineered features |
+4.  **Gap predictability.** With 126K specimens, a Random Forest now slightly beats the mean-guess (CV MAE 2,053 vs 2,325), suggesting subtle structure emerges at scale. Q-Q plots confirm exponential tails with deviations.
 
 ## Key Findings
 
-**Density.** Only **2,027** R-primes exist among the first 100,000 primes (up to 1,299,709), giving a relative density of **0.156%** — roughly 1 in 640 primes. The count grows as a power law \(C(B) \propto B^{0.79}\).
+| Metric | Value |
+|--------|-------|
+| r-primes found | **126,764** (p,q ≤ 8,000) |
+| Range | 41 → 318,770,597 |
+| Mean / median gap | 2,515 / 1,200 |
+| Power-law exponent α | 0.768 |
+| p,q correlation | 0.026 (essentially independent) |
 
-**Modulo structure.** Every R-prime is **≡ 1 (mod 4)** — a theorem: if \(p\) is odd, \(p^2 ≡ 1 \ (\text{mod }4)\) and \(4q^2 ≡ 0 \ (\text{mod }4)\). More strikingly, **98% are ≡ 5 (mod 8)** (only 39 of 2,027 are ≡ 1 mod 8). This is a strong statistical signal.
+**Modulo biases.** Every r-prime is ≡ 1 (mod 4) by theorem. Strikingly:
 
-**Gaps.** Mean gap = 641, median = 456, max = 6,096. The empirical CDF closely tracks the exponential distribution — consistent with Cramér's random model.
+| Mod | Most frequent | Share | Uniform |
+|-----|--------------|-------|---------|
+| 3 | 2 | **99.8%** | 33.3% |
+| 4 | 1 | **100%** | 25.0% |
+| 8 | 5 | **99.9%** | 12.5% |
+| 12 | 5 | **99.8%** | 8.3% |
 
-**Benford.** Significant deviation (\(χ² = 177, p < 10^{-15}\)) from Benford's law, unlike the full prime set which follows it closely.
-
-**ML.** A Random Forest with 10 engineered features cannot beat the mean on gap prediction (CV MAE 510 vs 480 for mean-guess), consistent with gap randomness.
+**ML.** Random Forest with 12 engineered features achieves CV MAE 2,053 vs mean-guess 2,325 — modest but real predictive power. Feature importance shows log(R) and R dominate.
 
 ## Visualizations
 
-### 1. Overview
+### 1. (p,q) Scatter
 
-Distribution of (p,q) pairs that yield R-primes, discovery-order growth, p/q ratios, gaps, and linear fit.
+Distribution of valid prime pairs, colored by \(\log_{10} r\).
 
 <p align="center">
-  <img src="figs/01_overview.png" alt="Overview" width="90%">
+  <img src="figs/01_pq_scatter.png" alt="pq scatter" width="80%">
 </p>
 
-### 2. Density Decay
+### 2. Gap Distribution
 
-Cumulative count vs bound (power-law fit), raw density (R-primes per integer), and relative density (R-primes / all-primes).
+Histogram with exponential fit and Q-Q plot vs exponential distribution.
 
 <p align="center">
-  <img src="figs/02_density.png" alt="Density" width="90%">
+  <img src="figs/02_gap_distribution.png" alt="gap distribution" width="85%">
 </p>
 
-### 3. Modulo Class Analysis
+### 3. Density / Cumulative Count
 
-Distribution of R-prime residues mod 3, 4, 5, 6, 8, 12. The strong skew mod 8 (5 vs 1) is the most striking pattern.
+Power-law cumulative growth and relative density decay.
 
 <p align="center">
-  <img src="figs/03_modulo_classes.png" alt="Modulo classes" width="90%">
+  <img src="figs/03_density_cumulative.png" alt="density" width="85%">
 </p>
 
-### 4. Uniformity Tests
+### 4. p/q Ratio Distribution
 
-χ² goodness-of-fit tests for uniform residue distribution. Mod 4 is trivially non-uniform (all ≡ 1); mod 8 and mod 12 show highly significant deviations.
+Centered near 1 with slight right skew — p and q are symmetric generators.
 
 <p align="center">
-  <img src="figs/04_uniformity_tests.png" alt="Uniformity tests" width="90%">
+  <img src="figs/04_pq_ratio.png" alt="pq ratio" width="70%">
 </p>
 
-### 5. Benford's Law
+### 5. Residue Class Biases
 
-First-digit distribution vs Benford's law, for both R-primes and all primes. R-primes deviate significantly; all primes do not.
+Multi-modulus bar charts showing extreme over-representation in specific classes.
 
 <p align="center">
-  <img src="figs/05_benford.png" alt="Benford" width="90%">
+  <img src="figs/05_residue_classes.png" alt="residue classes" width="90%">
 </p>
 
-### 6. Ulam Spiral
+### 6. Benford's Law
 
-201×201 Ulam spiral: all primes in blue, R-primes in red, overlap in magenta. The R-primes concentrate on diagonal bands, revealing structure invisible to 1-D analysis.
+First-digit distribution: r-primes vs all primes vs Benford theory.
 
 <p align="center">
-  <img src="figs/06_ulam_spiral.png" alt="Ulam spiral" width="90%">
+  <img src="figs/06_benford.png" alt="benford" width="85%">
 </p>
 
-### 7. ML Gap Prediction
+### 7. Gap vs Size Trend
 
-Random Forest attempt to predict the next gap from (p, q, R, ratios, residues, log(R)). Feature importance shows log(R) dominates — but the model still fails to beat the mean.
+Gaps grow with r (log-log), consistent with prime number heuristics.
 
 <p align="center">
-  <img src="figs/07_ml_gap_prediction.png" alt="ML gap prediction" width="90%">
+  <img src="figs/07_gap_vs_size.png" alt="gap vs size" width="80%">
 </p>
 
-### 8. Correlation Matrix
+### 8. Ulam Spiral
 
-Pearson correlations between p, q, R, and p/q. R is strongly correlated with p (0.87) but not with q (−0.07), reflecting R ≈ p² dominance.
+201×201 comparison: all primes (blue), r-primes (red), overlap (magenta).
 
 <p align="center">
-  <img src="figs/08_correlation.png" alt="Correlation" width="90%">
+  <img src="figs/08_ulam_spiral.png" alt="ulam spiral" width="95%">
+</p>
+
+### 9. ML Gap Prediction
+
+Random Forest prediction, actual vs predicted, and feature importance.
+
+<p align="center">
+  <img src="figs/09_ml_gap_prediction.png" alt="ml gap prediction" width="95%">
+</p>
+
+### 10. Correlation Matrix
+
+Pearson correlations with scatter pairs.
+
+<p align="center">
+  <img src="figs/10_correlation.png" alt="correlation" width="90%">
 </p>
 
 ## Repository Structure
 
 | File | Purpose |
 |------|---------|
-| `paper.tex` | arXiv-style LaTeX paper describing findings and methodology |
-| `PAPER.md` | Markdown pre-print for GitHub rendering |
-| `prime_utils.py` | Shared module: loads the 100K prime dataset, provides `is_prime()`, `sieve_of_eratosthenes()`, `find_primes_of_form()` |
-| `research_analysis.py` | **Main research engine** — collects all R-primes, runs 8 statistical analyses, saves all figures |
-| `analyze_dataset.py` | Exploratory analysis of the 100K prime dataset itself (gaps, twin primes, Chebyshev bias, mod 10) |
-| `sieve.py` | Interactive search for R-primes up to a user-specified limit, with multi-panel visualization |
-| `visualize_ml_primes.py` | Iterative search + Random Forest classifier with 13 engineered features + cross-validation |
-| `primes.py` | Grok-powered pattern analysis via xAI API (requires `XAI_API_KEY`) |
-| `log_100000.txt` | First 100,000 primes (PHP serialized, up to 1,299,709) |
-| `figs/` | Generated research visualizations |
+| `research_analysis.py` | **Main research engine** — exhaustive search (p,q ≤ 8,000), 10 statistical analyses, all figures |
+| `prime_utils.py` | Shared module: loads 100K prime dataset, `is_prime()`, `sieve_of_eratosthenes()` |
+| `paper.tex` / `PAPER.md` | arXiv-style LaTeX paper and Markdown pre-print |
+| `analyze_dataset.py` | Exploratory analysis of the 100K prime dataset (gaps, Chebyshev bias, mod 10) |
+| `sieve.py` | Interactive search for r-primes with multi-panel visualization |
+| `visualize_ml_primes.py` | Random Forest classifier with 13 engineered features |
+| `primes.py` | Grok-powered pattern analysis (requires `XAI_API_KEY`) |
+| `log_100000.txt` | First 100,000 primes (up to 1,299,709) |
+| `figs/` | 10 generated research figures |
 
 ## Methodology
 
 ### Why \(p^2 + 4q^2\)?
 
-The form \(x^2 + 4y^2\) is one of the simplest positive definite quadratic forms after \(x^2 + y^2\). By restricting \(x\) and \(y\) to be prime, we create a deeply nested rarity: a prime generated by a quadratic form whose generators are themselves prime. This is a natural next step after studying twin primes, prime constellations, and primes in arithmetic progressions.
+The form \(x^2 + 4y^2\) is a positive definite binary quadratic form of discriminant \(-16\). By restricting \(x,y\) to be prime, we create a deeply nested rarity analogous to Landau's fourth problem and the Bunyakovsky conjecture. This serves as a testbed for whether classical random models of primes (Cramér, Poisson gaps, Benford) hold under severe constraints.
 
 ### Why Random Forest?
 
-Rather than using deep learning (which requires enormous datasets), Random Forest provides:
-- **Interpretability**: feature importance directly shows which factors matter
-- **Robustness**: works well on small, imbalanced datasets
-- **Non-linearity**: captures interactions between p, q, modular residues, and ratios
+Random Forest provides interpretability (feature importance), robustness on moderate-sized data, and non-linear feature interactions without requiring the enormous datasets of deep learning.
 
-### Why Benford's Law?
+### Search methodology
 
-Benford's law is an unexpected statistical regularity in many natural datasets. Primes famously obey it; testing whether R-primes deviate probes whether the "double primality" constraint breaks the scale-invariance that produces Benford behavior.
-
-### Why Ulam Spiral?
-
-The Ulam spiral reveals geometric structure invisible to 1-D analysis. Comparing the full prime spiral with the R-prime subset highlights whether the nested constraint creates secondary geometric patterns.
+The exhaustive search iterates over all 1,007 primes ≤ 8,000 for both p and q (~1M candidate pairs), testing each \(r\) with `sympy.isprime` (deterministic Miller-Rabin). This yields 126,764 r-primes — a 62× improvement over our earlier dataset-limited search.
 
 ## Requirements
 
 ```bash
-pip install matplotlib scikit-learn numpy scipy
-# optional — for Grok analysis
-pip install openai
-export XAI_API_KEY="your-key"
+pip install numpy matplotlib seaborn scipy sympy scikit-learn
 ```
 
 ## Usage
 
 ```bash
-# Full research analysis (generates all figures)
+# Full research analysis (generates all 10 figures)
 python3 research_analysis.py
-
-# Explore the 100K prime dataset
-python3 analyze_dataset.py
-
-# Interactive special-prime search
-python3 sieve.py
-
-# ML-based analysis with iterative expansion
-python3 visualize_ml_primes.py
-
-# Grok-powered pattern analysis
-python3 primes.py
 ```
 
 ## Limitations
 
-- The 100K prime dataset limits R-prime collection to ∼1.3M. Extending beyond would require a larger prime list.
-- Gap prediction ML uses simple features; transformers or graph-based approaches might capture long-range dependencies.
-- No formal proof exists for the statistical observations — these are empirical findings that may suggest deeper number-theoretic structure.
+- Search limited to p,q ≤ 8,000 (r up to ~3.2×10⁸). Extending to 50K would reach r ~ 10¹⁰.
+- No proof of infinitude — analogous to Landau's unsolved problems.
+- ML features are heuristic; deeper architectures may capture more structure.
 
 ## License
 
